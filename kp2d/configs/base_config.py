@@ -79,7 +79,7 @@ cfg.datasets.train.repeat = 1                                          # Number 
 ### DATASETS.VAL
 ########################################################################################################################
 cfg.datasets.val = CN()
-cfg.datasets.val.path = '/data/datasets/kp2d/HPatches/'     # Validation data path (HPatches)
+cfg.datasets.val.path = '/cluster/scratch/shecai/HPatches'     # Validation data path (HPatches)
 ########################################################################################################################
 ### THESE SHOULD NOT BE CHANGED
 ########################################################################################################################
