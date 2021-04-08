@@ -12,7 +12,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from tqdm import tqdm
 
 import horovod.torch as hvd
-from KP2D.kp2d.datasets.patches_dataset import PatchesDataset
+from kp2d.datasets.patches_dataset import PatchesDataset
 from kp2d.evaluation.evaluate import evaluate_keypoint_net
 from kp2d.models.KeypointNetwithIOLoss import KeypointNetwithIOLoss
 from kp2d.utils.config import parse_train_file
