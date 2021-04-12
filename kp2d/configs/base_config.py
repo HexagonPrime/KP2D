@@ -30,7 +30,7 @@ cfg.wandb.dir = ''                                       # Wandb save folder
 ### MODEL
 ########################################################################################################################
 cfg.model = CN()
-cfg.model.checkpoint_path = '/data/experiments/kp2d/'              # Checkpoint path for model saving
+cfg.model.checkpoint_path = '/cluster/scratch/shecai/KP2D_model'              # Checkpoint path for model saving
 cfg.model.save_checkpoint = True
 ########################################################################################################################
 ### MODEL.SCHEDULER
