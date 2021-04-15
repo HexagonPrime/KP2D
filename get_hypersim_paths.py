@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 
 images_dict_list = []
 for scene in os.listdir("/cluster/scratch/shecai/hypersim"):
@@ -14,6 +15,8 @@ for scene in os.listdir("/cluster/scratch/shecai/hypersim"):
                 image_path = os.path.join(cam_trajectory_dir, image)
                 images_dict_list.append([scene, cam_trajectory_dir, image_path])
 print (images_dict_list)
+df = pd.DataFrame(images_dict_list)
+df.to_csv('hypersim.csv', index=False, header=False)
 
 # print(scene_images_dir_list)
 
