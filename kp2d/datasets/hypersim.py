@@ -24,7 +24,7 @@ class HypersimLoader(Dataset):
         self.root_dir = root_dir
 
         col_list = ["scene", "cam_trajectory", "img_path"]
-        df = pd.read_csv(root_dir, usecols=col_list)
+        df = pd.read_csv(root_dir, names=col_list)
 
         self.files = df["img_path"].tolist()
 
