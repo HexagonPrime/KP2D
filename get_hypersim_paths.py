@@ -10,7 +10,7 @@ for scene in os.listdir("/cluster/scratch/shecai/hypersim"):
     for directory in os.listdir(scene_images_dir):
         if directory.endswith("_final_hdf5"):
             cam_trajectory_dir = os.path.join(scene_images_dir, directory)
-            for image in os.listdir(cam_trajectory_dir)
+            for image in os.listdir(cam_trajectory_dir):
                 image_path = os.path.join(cam_trajectory_dir, image)
                 images_dict_list.append([scene, cam_trajectory_dir, image_path])
 print (images_dict_list)
