@@ -1,6 +1,6 @@
 import os
 
-images_dict_list[]
+images_dict_list = []
 for scene in os.listdir("/cluster/scratch/shecai/hypersim"):
     scene_dir = os.path.join("/cluster/scratch/shecai/hypersim", scene)
     print (scene_dir)
