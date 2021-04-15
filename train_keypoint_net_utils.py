@@ -65,10 +65,11 @@ def setup_datasets_and_dataloaders(config):
         _set_seeds(42 + worker_id)
 
     data_transforms = image_transforms(shape=config.augmentation.image_shape, jittering=config.augmentation.jittering)
-    if config.train.dataset == 'COCO':
-        train_dataset = COCOLoader(config.train.path, data_transform=data_transforms['train'])
-    else:
-        train_dataset = HypersimLoader(config.train.path, data_transform=data_transforms['train'])
+    # if config.train.dataset == 'COCO':
+    #     train_dataset = COCOLoader(config.train.path, data_transform=data_transforms['train'])
+    # else:
+    #     train_dataset = HypersimLoader(config.train.path, data_transform=data_transforms['train'])
+    train_dataset = HypersimLoader(config.train.path, data_transform=data_transforms['train'])
     # Concatenate dataset to produce a larger one
     if config.train.repeat > 1:
         train_dataset = ConcatDataset([train_dataset for _ in range(config.train.repeat)])
