@@ -13,13 +13,7 @@ for scene in os.listdir("/cluster/scratch/shecai/hypersim"):
             cam_trajectory_dir = os.path.join(scene_images_dir, directory)
             for image in os.listdir(cam_trajectory_dir):
                 image_path = os.path.join(cam_trajectory_dir, image)
-                images_dict_list.append([scene, cam_trajectory_dir, image_path])
+                images_dict_list.append([scene, directory, image_path])
 print (images_dict_list)
 df = pd.DataFrame(images_dict_list)
 df.to_csv('hypersim.csv', index=False, header=False)
-
-# print(scene_images_dir_list)
-
-# for scene_images_dir in scene_images_dir_list:
-#     for directory in os.listdir(scene_images_dir):
-#         if directory.endswith("_final_hdf5"):

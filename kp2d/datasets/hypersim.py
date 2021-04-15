@@ -22,17 +22,22 @@ class HypersimLoader(Dataset):
         super().__init__()
         self.root_dir = root_dir
 
-        self.files=[]
+        col_list = ["scene", "cam_trajectory", "img_path"]
+        df = pd.read_csv(root_dir, usecols=col_list)
 
-        for filename in glob.glob(root_dir + '/*.jpg'):
-            self.files.append(filename)
+        self.files = df["img_path"].tolist()
+
+        # for filename in glob.glob(root_dir + '/*.jpg'):
+        #     self.files.append(filename)
         self.data_transform = data_transform
 
     def __len__(self):
         return len(self.files)
 
     def _read_rgb_file(self, filename):
-        return Image.open(filename)
+        h5 = h5py.File(filename, 'r')
+        img = np.array(h5_source['dataset'][:], dtype='f')
+        return Image.open(img)
 
     def __getitem__(self, idx):
 
