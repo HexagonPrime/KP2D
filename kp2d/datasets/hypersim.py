@@ -4,6 +4,7 @@ import glob
 
 from PIL import Image
 from torch.utils.data import Dataset
+import pandas as pd
 
 
 class HypersimLoader(Dataset):
