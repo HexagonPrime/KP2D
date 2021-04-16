@@ -27,6 +27,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='KP2D training script')
     parser.add_argument('file', type=str, help='Input file (.ckpt or .yaml)')
     args = parser.parse_args()
+    print(args.file)
     assert args.file.endswith(('.ckpt', '.yaml')), \
         'You need to provide a .ckpt of .yaml file'
     return args
