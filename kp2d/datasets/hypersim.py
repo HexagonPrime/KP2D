@@ -44,6 +44,7 @@ class HypersimLoader(Dataset):
         img_array = img_array.astype(np.uint8)
         img = Image.fromarray(img_array)
         img = img.resize((img_array.shape[0], img_array.shape[1]))
+        print (img.size)
         return img
 
     def __getitem__(self, idx):
