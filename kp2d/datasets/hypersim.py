@@ -39,8 +39,8 @@ class HypersimLoader(Dataset):
 
     def _read_rgb_file(self, filename):
         h5 = h5py.File(filename, 'r')
-        img = np.array(h5['dataset'][:], dtype='f')
-        return Image.open(img)
+        img_array = np.array(h5['dataset'][:], dtype='f')
+        return Image.fromarray(img_array)
 
     def __getitem__(self, idx):
 
