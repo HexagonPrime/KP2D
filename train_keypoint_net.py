@@ -28,6 +28,7 @@ def parse_args():
     parser.add_argument('file', type=str, help='Input file (.ckpt or .yaml)')
     args = parser.parse_args()
     print(args.file)
+    print(str(args.file.endswith(('.ckpt', '.yaml'))))
     assert args.file.endswith(('.ckpt', '.yaml')), \
         'You need to provide a .ckpt of .yaml file'
     return args
