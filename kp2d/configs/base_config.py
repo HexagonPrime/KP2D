@@ -66,14 +66,14 @@ cfg.datasets = CN()
 ########################################################################################################################
 cfg.datasets.augmentation = CN()
 # cfg.datasets.augmentation.image_shape = (240, 320)              # Image shape
-# cfg.datasets.augmentation.image_shape = (1024, 768)              # Image shape
-cfg.datasets.augmentation.image_shape = (340, 256)
+cfg.datasets.augmentation.image_shape = (1024, 768)              # Image shape
+# cfg.datasets.augmentation.image_shape = (340, 256)
 cfg.datasets.augmentation.jittering = (0.5, 0.5, 0.2, 0.05)     # Color jittering values
 ########################################################################################################################
 ### DATASETS.TRAIN
 ########################################################################################################################
 cfg.datasets.train = CN()
-cfg.datasets.train.batch_size = 8                                      # Training batch size
+cfg.datasets.train.batch_size = 4                                      # Training batch size
 cfg.datasets.train.num_workers = 16                                    # Training number of workers
 # cfg.datasets.train.path = '/cluster/scratch/shecai/train2017'          # Training data path (COCO dataset)
 cfg.datasets.train.path = '/cluster/scratch/shecai/hypersim/hypersim.csv'          # Training data path (Hypersim dataset)
