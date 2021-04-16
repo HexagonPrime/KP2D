@@ -42,7 +42,9 @@ class HypersimLoader(Dataset):
         img_array = np.array(h5['dataset'][:], dtype='f')
         img_array = img_array * 255
         img_array = img_array.astype(np.uint8)
-        return Image.fromarray(img_array)
+        img = Image.fromarray(img_array)
+        img = img.resize((img_array.shape[0], img_array.shape[1]))
+        return img
 
     def __getitem__(self, idx):
 

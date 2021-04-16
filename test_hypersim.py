@@ -13,5 +13,7 @@ for filename in files:
     img_array = np.array(h5['dataset'][:], dtype='f')
     img_array = img_array * 255
     img_array = img_array.astype(np.uint8)
-    print(img_array.shape)
-    Image.fromarray(img_array)
+    # print(img_array.shape)
+    img = Image.fromarray(img_array)
+    img = img.resize((img.size[0], img.size[1]))
+    print (img.size)
