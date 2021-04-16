@@ -18,4 +18,4 @@ for filename in files:
     img = img.resize((int(img.size[0]/3), int(img.size[1]/3)))
     # print (img.size)
     if not (img.size[0] == 341 and img.size[1] == 256):
-        print("false")
+        print(filename)
