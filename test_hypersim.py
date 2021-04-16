@@ -15,5 +15,5 @@ for filename in files:
     img_array = img_array.astype(np.uint8)
     # print(img_array.shape)
     img = Image.fromarray(img_array)
-    img = img.resize((img.size[0]/3, img.size[1]/3))
+    img = img.resize((int(img.size[0]/3), int(img.size[1]/3)))
     print (img.size)
