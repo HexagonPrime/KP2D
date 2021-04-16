@@ -11,5 +11,7 @@ for filename in files:
     h5 = h5py.File(filename, 'r')
     print(filename)
     img_array = np.array(h5['dataset'][:], dtype='f')
+    img_array = img_array * 255
+    img_array = img_array.astype(np.uint8)
     print(img_array.shape)
     Image.fromarray(img_array)
