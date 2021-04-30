@@ -65,9 +65,7 @@ cfg.datasets = CN()
 ### DATASETS.AUGMENTATION
 ########################################################################################################################
 cfg.datasets.augmentation = CN()
-# cfg.datasets.augmentation.image_shape = (240, 320)              # Image shape
-# cfg.datasets.augmentation.image_shape = (1024, 768)              # Image shape
-cfg.datasets.augmentation.image_shape = (512, 384)
+cfg.datasets.augmentation.image_shape = (240, 320)              # Image shape
 cfg.datasets.augmentation.jittering = (0.5, 0.5, 0.2, 0.05)     # Color jittering values
 ########################################################################################################################
 ### DATASETS.TRAIN
@@ -75,11 +73,8 @@ cfg.datasets.augmentation.jittering = (0.5, 0.5, 0.2, 0.05)     # Color jitterin
 cfg.datasets.train = CN()
 cfg.datasets.train.batch_size = 8                                      # Training batch size
 cfg.datasets.train.num_workers = 16                                    # Training number of workers
-# cfg.datasets.train.path = '/cluster/scratch/shecai/train2017'          # Training data path (COCO dataset)
-cfg.datasets.train.path = '/cluster/scratch/shecai/hypersim/hypersim.csv'          # Training data path (Hypersim dataset)
+cfg.datasets.train.path = '/cluster/scratch/shecai/train2017'        # Training data path (COCO dataset)
 cfg.datasets.train.repeat = 1                                          # Number of times training dataset is repeated per epoch
-# cfg.datasets.train.dataset = 'COCO'                                    # Training dataset name, can be 'COCO' or 'Hypersim'
-# cfg.datasets.train.dataset = 'Hypersim'                                    # Training dataset name, can be 'COCO' or 'Hypersim'
 ########################################################################################################################
 ### DATASETS.VAL
 ########################################################################################################################

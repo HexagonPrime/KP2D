@@ -27,8 +27,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='KP2D training script')
     parser.add_argument('file', type=str, help='Input file (.ckpt or .yaml)')
     args = parser.parse_args()
-    print(args.file)
-    print(str(args.file.endswith(('.ckpt', '.yaml'))))
     assert args.file.endswith(('.ckpt', '.yaml')), \
         'You need to provide a .ckpt of .yaml file'
     return args
@@ -144,8 +142,7 @@ def evaluation(config, completed_epoch, model, summary):
     use_color = config.model.params.use_color
 
     if rank() == 0:
-        # eval_shape = config.datasets.augmentation.image_shape[::-1]
-        eval_shape = (320, 240)
+        eval_shape = config.datasets.augmentation.image_shape[::-1]
         eval_params = [{'res': eval_shape, 'top_k': 300}]
         for params in eval_params:
             hp_dataset = PatchesDataset(root_dir=config.datasets.val.path, use_color=use_color, output_shape=params['res'], type='a')
