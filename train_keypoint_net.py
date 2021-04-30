@@ -25,7 +25,8 @@ from train_keypoint_net_utils import (_set_seeds, sample_to_cuda,
 def parse_args():
     """Parse arguments for training script"""
     parser = argparse.ArgumentParser(description='KP2D training script')
-    parser.add_argument('file', type=str, help='Input file (.ckpt or .yaml)')
+    parser.add_argument('--file', type=str, help='Input file (.ckpt or .yaml)')
+    parser.add_argument('--pretrained_model', type=str, default=None)
     args = parser.parse_args()
     assert args.file.endswith(('.ckpt', '.yaml')), \
         'You need to provide a .ckpt of .yaml file'
@@ -47,7 +48,7 @@ def model_submodule(model):
     the model itself. """
     return model.module if hasattr(model, 'module') else model
 
-def main(file):
+def main(file, pretrained_model):
     """
     KP2D training script.
 
@@ -85,7 +86,7 @@ def main(file):
         printcolor(config.model.params, 'red')
 
     # Setup model and datasets/dataloaders
-    model = KeypointNetwithIOLoss(**config.model.params)
+    model = KeypointNetwithIOLoss(pretrained_model=pretrained_model, **config.model.params)
     train_dataset, train_loader = setup_datasets_and_dataloaders(config.datasets)
     printcolor('({}) length: {}'.format("Train", len(train_dataset)))
 
@@ -255,4 +256,4 @@ def train(config, train_loader, model, optimizer, epoch, summary):
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args.file)
+    main(args.file, args.pretrained_model)

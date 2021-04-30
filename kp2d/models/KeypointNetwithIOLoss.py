@@ -162,7 +162,7 @@ class KeypointNetwithIOLoss(torch.nn.Module):
     def __init__(
         self, keypoint_loss_weight=1.0, descriptor_loss_weight=2.0, score_loss_weight=1.0, 
         keypoint_net_learning_rate=0.001, with_io=True, use_color=True, do_upsample=True, 
-        do_cross=True, descriptor_loss=True, with_drop=True, keypoint_net_type='KeypointNet', **kwargs):
+        do_cross=True, descriptor_loss=True, with_drop=True, keypoint_net_type='KeypointNet', pretrained_model=None, **kwargs):
 
         super().__init__()
 
@@ -181,12 +181,30 @@ class KeypointNetwithIOLoss(torch.nn.Module):
         self.descriptor_loss = descriptor_loss
 
         # Initialize KeypointNet
-        if keypoint_net_type == 'KeypointNet':
-            self.keypoint_net = KeypointNet(use_color=use_color, do_upsample=do_upsample, with_drop=with_drop, do_cross=do_cross)
-        elif keypoint_net_type == 'KeypointResnet':
-            self.keypoint_net = KeypointResnet(with_drop=with_drop)
+        if pretrained_model == None:
+            if keypoint_net_type == 'KeypointNet':
+                self.keypoint_net = KeypointNet(use_color=use_color, do_upsample=do_upsample, with_drop=with_drop, do_cross=do_cross)
+            elif keypoint_net_type == 'KeypointResnet':
+                self.keypoint_net = KeypointResnet(with_drop=with_drop)
+            else:
+                raise NotImplemented('Keypoint net type not supported {}'.format(keypoint_net_type))
         else:
-            raise NotImplemented('Keypoint net type not supported {}'.format(keypoint_net_type))
+            checkpoint = torch.load(pretrained_model)
+            model_args = checkpoint['config']['model']['params']
+            if 'keypoint_net_type' in checkpoint['config']['model']['params']:
+                net_type = checkpoint['config']['model']['params']
+            else:
+                net_type = KeypointNet # default when no type is specified
+            if net_type is KeypointNet:
+                self.keypoint_net = KeypointNet(use_color=model_args['use_color'],
+                                do_upsample=model_args['do_upsample'],
+                                do_cross=model_args['do_cross'])
+            else:
+                self.keypoint_net = KeypointResnet()
+            self.keypoint_net.load_state_dict(checkpoint['state_dict'])
+            print('Loaded KeypointNet from {}'.format(pretrained_model))
+            print('KeypointNet params {}'.format(model_args))
+
         self.keypoint_net = self.keypoint_net.cuda()
         self.add_optimizer_params('KeypointNet', self.keypoint_net.parameters(), keypoint_net_learning_rate)
 
