@@ -12,7 +12,8 @@ import horovod.torch as hvd
 from kp2d.datasets.augmentations import (ha_augment_sample, resize_sample,
                                          spatial_augment_sample,
                                          to_tensor_sample)
-from kp2d.datasets.coco import COCOLoader, HypersimLoader
+from kp2d.datasets.coco import COCOLoader
+from kp2d.datasets.hypersim import HypersimLoader
 from kp2d.utils.horovod import rank, world_size
 
 
