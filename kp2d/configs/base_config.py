@@ -73,7 +73,7 @@ cfg.datasets.augmentation.jittering = (0.5, 0.5, 0.2, 0.05)     # Color jitterin
 ### DATASETS.TRAIN
 ########################################################################################################################
 cfg.datasets.train = CN()
-cfg.datasets.train.batch_size = 4                                      # Training batch size
+cfg.datasets.train.batch_size = 2                                      # Training batch size
 cfg.datasets.train.num_workers = 16                                    # Training number of workers
 # cfg.datasets.train.path = '/cluster/scratch/shecai/train2017'          # Training data path (COCO dataset)
 cfg.datasets.train.path = '/scratch_net/biwidl306_second/shecai/hypersim/'          # Training data path (Hypersim dataset)
