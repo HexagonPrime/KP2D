@@ -162,3 +162,37 @@ booktitle={International Conference on Learning Representations},
 year={2020}
 }
 ```
+
+#### Modification
+
+### Download Hypersim dataset and pre-process to csv file
+
+Run:
+
+`python3 ./download.py -d /cluster/scratch/shecai/hypersim --contains .color.hdf5 --silent`
+
+Then run：
+
+`python get_hypersim_paths.py`
+
+### For hypersim usage
+
+The dataloader `HypersimLoader` under `hypersim.py` has three modes: 
+
+1. coco: training without additional supervision. 
+2. scene: training with image pairs from the same scene.
+3. cam_trajectory: training with image pairs from the same camera trajectory respectively.
+
+Choose the training mode by passing `--mode <mode_to_use>` argument, e.g. `--mode coco`.
+
+
+### Loading a pretrained model
+
+Load a pretrained model by passing `--pretrained_model <path_to_pretrained_model>` argument, e.g. `--pretrained_model /cluster/scratch/shecai/KP2D_pretrained_models/v4.ckpt`
+
+### Overall
+To load the pretrained model v4 in the paper and train using hypersim without additional supervision, run:
+
+`python train_keypoint_net.py --file kp2d/configs/v4.yaml --mode coco --pretrained_model /cluster/scratch/shecai/KP2D_pretrained_models/v4.ckpt`
+
+Note: change dataset path and other parameters in `kp2d/config/base_config.py`.

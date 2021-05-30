@@ -30,6 +30,7 @@ class SummaryWriter:
                  project='monodepth',
                  entity='tri',
                  mode='run',
+                 name=None,
                  job_type='train',
                  log_wb=True):
         self.log_wb = log_wb
@@ -38,7 +39,7 @@ class SummaryWriter:
             os.environ['WANDB_DIR'] = log_path
             self.wb_logger = WandBLogger(
                 params, description=description,
-                project=project, entity=entity, mode=mode, job_type=job_type)
+                project=project, entity=entity, name=name, mode=mode, job_type=job_type)
 
     @property
     def run_name(self):

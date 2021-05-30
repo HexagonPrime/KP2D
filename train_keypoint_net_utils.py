@@ -34,12 +34,16 @@ def sample_to_cuda(data):
         return data.to('cuda')
 
 
-def image_transforms(shape, jittering):
+def image_transforms(shape, jittering, training_mode):
     def train_transforms(sample):
-        sample = resize_sample(sample, image_shape=shape)
-        sample = spatial_augment_sample(sample)
+        # sample = resize_sample(sample, image_shape=shape)
+        if training_mode=='coco':
+            # print("Training with coco style, WILL apply spatial augmentation")
+            sample = spatial_augment_sample(sample)
+        # else:
+            # print("NOT training with coco style, WILL NOT apply spatial augmentation")
         sample = to_tensor_sample(sample)
-        sample = ha_augment_sample(sample, jitter_paramters=jittering)
+        sample = ha_augment_sample(sample, training_mode=training_mode, jitter_paramters=jittering)
         return sample
 
     return {'train': train_transforms}
@@ -58,15 +62,15 @@ def _set_seeds(seed=42):
     torch.cuda.manual_seed_all(seed)
 
 
-def setup_datasets_and_dataloaders(config):
+def setup_datasets_and_dataloaders(config, training_mode):
     """Prepare datasets for training, validation and test."""
     def _worker_init_fn(worker_id):
         """Worker init fn to fix the seed of the workers"""
         _set_seeds(42 + worker_id)
 
-    data_transforms = image_transforms(shape=config.augmentation.image_shape, jittering=config.augmentation.jittering)
-    train_dataset = COCOLoader(config.train.path, data_transform=data_transforms['train'])
-    # train_dataset = HypersimLoader(config.train.path, data_transform=data_transforms['train'])
+    data_transforms = image_transforms(training_mode=training_mode, shape=config.augmentation.image_shape, jittering=config.augmentation.jittering)
+    # train_dataset = COCOLoader(config.train.path, data_transform=data_transforms['train'])
+    train_dataset = HypersimLoader(config.train.path, training_mode, data_transform=data_transforms['train'])
     # Concatenate dataset to produce a larger one
     if config.train.repeat > 1:
         train_dataset = ConcatDataset([train_dataset for _ in range(config.train.repeat)])

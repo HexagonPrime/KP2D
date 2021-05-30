@@ -39,6 +39,7 @@ class WandBLogger:
                  description=None,
                  project='debug_wandb',
                  entity='tri',
+                 name=None,
                  mode='run',
                  job_type='train'):
 
@@ -53,13 +54,15 @@ class WandBLogger:
         params.update({'run_dir': pwd,
                        'job_type': job_type,
                        'description': description,
-                       'name': ''})
+                       'name': name})
 
         self._wandb_logger = wandb.init(config=params, allow_val_change=True)
+        wandb.run.name = name
         wandb.run.save()
 
         self.description = description
         self.run_id = wandb.run.id
+        wandb.run.name = name
         self.run_name = wandb.run.name
 
         print('-'*50)

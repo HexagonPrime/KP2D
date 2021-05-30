@@ -52,7 +52,8 @@ def resize_sample(sample, image_shape, image_interpolation=Image.ANTIALIAS):
     """
     # image
     image_transform = transforms.Resize(image_shape, interpolation=image_interpolation)
-    sample['image'] = image_transform(sample['image'])
+    sample['image_target'] = image_transform(sample['image_target'])
+    sample['image_source'] = image_transform(sample['image_source'])
     return sample
 
 
@@ -73,20 +74,31 @@ def to_tensor_sample(sample, tensor_type='torch.FloatTensor'):
         Sample with keys cast as tensors
     """
     transform = transforms.ToTensor()
-    sample['image'] = transform(sample['image']).type(tensor_type)
+    sample['image_target'] = transform(sample['image_target']).type(tensor_type)
+    sample['image_source'] = transform(sample['image_source']).type(tensor_type)
     return sample
 
 
 def spatial_augment_sample(sample):
     """ Apply spatial augmentation to an image (flipping and random affine transformation)."""
-    augment_image = transforms.Compose([
-        transforms.RandomVerticalFlip(p=0.5),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomAffine(15, translate=(0.1, 0.1), scale=(0.9, 1.1))
+    # Original code
+    # augment_image = transforms.Compose([
+    #     transforms.RandomVerticalFlip(p=0.5),
+    #     transforms.RandomHorizontalFlip(p=0.5),
+    #     transforms.RandomAffine(15, translate=(0.1, 0.1), scale=(0.9, 1.1))
         
-    ])
-    sample['image'] = augment_image(sample['image'])
-
+    # ])
+    # sample['image'] = augment_image(sample['image'])
+    # new code
+    if random.random() > 0.5:
+        sample['image_target'] = transforms.functional.vflip(sample['image_target'])
+        sample['image_source'] = transforms.functional.vflip(sample['image_source'])
+    if random.random() > 0.5:
+        sample['image_target'] = transforms.functional.hflip(sample['image_target'])
+        sample['image_source'] = transforms.functional.hflip(sample['image_source'])
+    angle, translations, scale, shear = transforms.RandomAffine.get_params(degrees=(float(-15), float(15)), translate=(0.1, 0.1), scale_ranges=(0.9, 1.1), shears=None, img_size=sample['image_target'].size)
+    sample['image_target'] = transforms.functional.affine(img=sample['image_target'], angle=angle, translate=translations, scale=scale, shear=shear)
+    sample['image_source'] = transforms.functional.affine(img=sample['image_source'], angle=angle, translate=translations, scale=scale, shear=shear)
     return sample
 
 def unnormalize_image(tensor, mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)):
@@ -322,26 +334,32 @@ def non_spatial_augmentation(img_warp_ori, jitter_paramters, color_order=[0,1,2]
     img_warp = torch.stack(img_warp, dim=0)
     return img_warp
 
-def ha_augment_sample(data, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=0.7, scaling_amplitude=0.2, max_angle=pi/4):
+def ha_augment_sample(data, training_mode, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=0.7, scaling_amplitude=0.2, max_angle=pi/4):
     """Apply Homography Adaptation image augmentation."""
-    target_img = data['image'].unsqueeze(0)
-    _, _, H, W = target_img.shape
-    device = target_img.device
+    target_img = data['image_target'].unsqueeze(0)
+    source_img = data['image_source'].unsqueeze(0)
+    if training_mode=='coco':
+        # print("Training with coco style, apply homography transformation")
+        _, _, H, W = target_img.shape
+        device = target_img.device
 
-    # Generate homography (warps source to target)
-    homography = sample_homography([H, W],
-        patch_ratio=patch_ratio, 
-        scaling_amplitude=scaling_amplitude, 
-        max_angle=max_angle)
-    homography = torch.from_numpy(homography).float().to(device)
+        # Generate homography (warps source to target)
+        homography = sample_homography([H, W],
+            patch_ratio=patch_ratio, 
+            scaling_amplitude=scaling_amplitude, 
+            max_angle=max_angle)
+        homography = torch.from_numpy(homography).float().to(device)
 
-    source_grid = image_grid(1, H, W,
-                    dtype=target_img.dtype,
-                    device=device,
-                    ones=False, normalized=True).clone().permute(0, 2, 3, 1)
+        source_grid = image_grid(1, H, W,
+                        dtype=target_img.dtype,
+                        device=device,
+                        ones=False, normalized=True).clone().permute(0, 2, 3, 1)
 
-    source_warped = warp_homography(source_grid, homography)
-    source_img = torch.nn.functional.grid_sample(target_img, source_warped, align_corners=True)
+        source_warped = warp_homography(source_grid, homography)
+        source_img = torch.nn.functional.grid_sample(source_img, source_warped, align_corners=True)
+        data['homography'] = homography
+    # else:
+        # print("Not coco style, training WITHOUT homography transformation")
 
     color_order = [0,1,2]
     if np.random.rand() > 0.5:
@@ -356,5 +374,41 @@ def ha_augment_sample(data, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=
 
     data['image'] = target_img.squeeze()
     data['image_aug'] = source_img.squeeze()
-    data['homography'] = homography
     return data
+
+# def ha_augment_sample(data, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=0.7, scaling_amplitude=0.2, max_angle=pi/4):
+#     """Apply Homography Adaptation image augmentation."""
+#     target_img = data['image_target'].unsqueeze(0)
+#     _, _, H, W = target_img.shape
+#     device = target_img.device
+
+#     # Generate homography (warps source to target)
+#     homography = sample_homography([H, W],
+#         patch_ratio=patch_ratio, 
+#         scaling_amplitude=scaling_amplitude, 
+#         max_angle=max_angle)
+#     homography = torch.from_numpy(homography).float().to(device)
+
+#     source_grid = image_grid(1, H, W,
+#                     dtype=target_img.dtype,
+#                     device=device,
+#                     ones=False, normalized=True).clone().permute(0, 2, 3, 1)
+
+#     source_warped = warp_homography(source_grid, homography)
+#     source_img = torch.nn.functional.grid_sample(target_img, source_warped, align_corners=True)
+
+#     color_order = [0,1,2]
+#     if np.random.rand() > 0.5:
+#         random.shuffle(color_order)
+
+#     to_gray = False
+#     if np.random.rand() > 0.5:
+#         to_gray = True
+
+#     target_img = non_spatial_augmentation(target_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
+#     source_img = non_spatial_augmentation(source_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
+
+#     data['image'] = target_img.squeeze()
+#     data['image_aug'] = source_img.squeeze()
+#     data['homography'] = homography
+#     return data

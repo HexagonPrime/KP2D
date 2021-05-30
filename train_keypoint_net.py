@@ -26,6 +26,7 @@ def parse_args():
     """Parse arguments for training script"""
     parser = argparse.ArgumentParser(description='KP2D training script')
     parser.add_argument('--file', type=str, help='Input file (.ckpt or .yaml)')
+    parser.add_argument('--training_mode', type=str, help='coco, cam_trajectory or scene')
     parser.add_argument('--pretrained_model', type=str, default=None)
     args = parser.parse_args()
     assert args.file.endswith(('.ckpt', '.yaml')), \
@@ -48,7 +49,7 @@ def model_submodule(model):
     the model itself. """
     return model.module if hasattr(model, 'module') else model
 
-def main(file, pretrained_model):
+def main(file, training_mode, pretrained_model=None):
     """
     KP2D training script.
 
@@ -86,8 +87,8 @@ def main(file, pretrained_model):
         printcolor(config.model.params, 'red')
 
     # Setup model and datasets/dataloaders
-    model = KeypointNetwithIOLoss(pretrained_model=pretrained_model, **config.model.params)
-    train_dataset, train_loader = setup_datasets_and_dataloaders(config.datasets)
+    model = KeypointNetwithIOLoss(pretrained_model=pretrained_model, training_mode=training_mode, **config.model.params)
+    train_dataset, train_loader = setup_datasets_and_dataloaders(config.datasets, training_mode)
     printcolor('({}) length: {}'.format("Train", len(train_dataset)))
 
     model = model.cuda()
@@ -109,6 +110,7 @@ def main(file, pretrained_model):
                                     project=config.wandb.project,
                                     entity=config.wandb.entity,
                                     job_type='training',
+                                    name=config.wandb.name,
                                     mode=os.getenv('WANDB_MODE', 'run'))
             config.model.checkpoint_path = os.path.join(config.model.checkpoint_path, summary.run_name)
         else:
@@ -123,7 +125,7 @@ def main(file, pretrained_model):
         summary = None
 
     # Initial evaluation
-    evaluation(config, 0, model, summary)
+    # evaluation(config, 0, model, summary)
     # Train
     for epoch in range(config.arch.epochs):
         # train for one epoch (only log if eval to have aligned steps...)
@@ -143,7 +145,8 @@ def evaluation(config, completed_epoch, model, summary):
     use_color = config.model.params.use_color
 
     if rank() == 0:
-        eval_shape = config.datasets.augmentation.image_shape[::-1]
+        # eval_shape = config.datasets.augmentation.image_shape[::-1]
+        eval_shape = (320, 240)
         eval_params = [{'res': eval_shape, 'top_k': 300}]
         for params in eval_params:
             hp_dataset = PatchesDataset(root_dir=config.datasets.val.path, use_color=use_color, output_shape=params['res'], type='a')
@@ -256,4 +259,4 @@ def train(config, train_loader, model, optimizer, epoch, summary):
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args.file, args.pretrained_model)
+    main(args.file, args.training_mode, args.pretrained_model)
