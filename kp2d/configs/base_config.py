@@ -66,8 +66,8 @@ cfg.datasets = CN()
 ########################################################################################################################
 cfg.datasets.augmentation = CN()
 # cfg.datasets.augmentation.image_shape = (240, 320)              # Image shape
-# cfg.datasets.augmentation.image_shape = (768, 1024)              # Image shape
-cfg.datasets.augmentation.image_shape = (384, 512)
+cfg.datasets.augmentation.image_shape = (768, 1024)              # Image shape
+# cfg.datasets.augmentation.image_shape = (384, 512)
 cfg.datasets.augmentation.jittering = (0.5, 0.5, 0.2, 0.05)     # Color jittering values
 ########################################################################################################################
 ### DATASETS.TRAIN
