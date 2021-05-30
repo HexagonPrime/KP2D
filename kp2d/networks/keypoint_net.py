@@ -81,7 +81,7 @@ class KeypointNet(torch.nn.Module):
             self.dropout = None
         self.pool = torch.nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.cell = 8
+        self.cell = 16
         self.upsample = torch.nn.PixelShuffle(upscale_factor=2)
 
     def forward(self, x):

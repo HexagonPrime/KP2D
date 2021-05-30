@@ -20,15 +20,15 @@ def build_descriptor_loss(source_des, target_des, source_points, tar_points, tar
     """Desc Head Loss, per-pixel level triplet loss from https://arxiv.org/pdf/1902.11046.pdf..
     Parameters
     ----------
-    source_des: torch.Tensor (B,256,H/8,W/8)
+    source_des: torch.Tensor (B,256,H/16,W/16)
         Source image descriptors.
-    target_des: torch.Tensor (B,256,H/8,W/8)
+    target_des: torch.Tensor (B,256,H/16,W/16)
         Target image descriptors.
-    source_points: torch.Tensor (B,H/8,W/8,2)
+    source_points: torch.Tensor (B,H/16,W/16,2)
         Source image keypoints
-    tar_points: torch.Tensor (B,H/8,W/8,2)
+    tar_points: torch.Tensor (B,H/16,W/16,2)
         Target image keypoints
-    tar_points_un: torch.Tensor (B,2,H/8,W/8)
+    tar_points_un: torch.Tensor (B,2,H/16,W/16)
         Target image keypoints unnormalized
     eval_only: bool
         Computes only recall without the loss.
@@ -241,10 +241,10 @@ class KeypointNetwithIOLoss(torch.nn.Module):
         self.keypoint_net_learning_rate = keypoint_net_learning_rate
         self.optim_params = []
 
-        self.cell = 8 # Size of each output cell. Keep this fixed.
-        self.border_remove = 4 # Remove points this close to the border.
+        self.cell = 16 # Size of each output cell. Keep this fixed.
+        self.border_remove = 8 # Remove points this close to the border.
         self.top_k2 = 300
-        self.relax_field = 4
+        self.relax_field = 8
 
         self.use_color = use_color
         self.descriptor_loss = descriptor_loss
@@ -406,7 +406,7 @@ class KeypointNetwithIOLoss(torch.nn.Module):
             d_uv_l2_mat = torch.norm(d_uv_mat_abs, p=2, dim=1)
             d_uv_l2_min, d_uv_l2_min_index = d_uv_l2_mat.min(dim=2)
 
-            dist_norm_valid_mask = d_uv_l2_min.lt(4) & border_mask.view(B,Hc*Wc)
+            dist_norm_valid_mask = d_uv_l2_min.lt(8) & border_mask.view(B,Hc*Wc)
             print('dist_norm_valid_mask')
             print(dist_norm_valid_mask)
 
@@ -476,7 +476,7 @@ class KeypointNetwithIOLoss(torch.nn.Module):
 
 
                 matching_score = torch.norm(target_uv_norm_topk_associated_raw - source_uv_warped_norm_topk_raw, p=2, dim=2)
-                inlier_mask = matching_score.lt(4)
+                inlier_mask = matching_score.lt(8)
                 inlier_gt = 2 * inlier_mask.float() - 1
 
                 if inlier_mask.sum() > 10:
