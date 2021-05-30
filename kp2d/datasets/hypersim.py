@@ -88,16 +88,16 @@ class HypersimLoader(Dataset):
         target_position_map = self.data_util_loader.loadPositionMap(info_target[0], info_target[1], info_target[2], info_target[3])
         source_reflectance_map = self.data_util_loader.loadReflectance(info_source[0], info_source[1], info_source[2], info_source[3])
         target_R_CW, target_t_CW = self.data_util_loader.loadCamPose(info_target[0], info_target[1], info_target[2], info_target[3])
-        source_center = torch.tensor([[512],[384]])
-        _, target_center, _ = self.reprojection.warp(source_center,
-                                        torch.from_numpy(source_position_map),
-                                        torch.from_numpy(target_R_CW), torch.from_numpy(target_t_CW),
-                                        mask_fov=True,
-                                        mask_occlusion=None,
-                                        mask_reflectance=None)
-        target_center = target_center.long()
-        scenter2tcenter = target_center - source_center
-        scenter2tcenter = [scenter2tcenter[0].item(), scenter2tcenter[1].item()]
+        # source_center = torch.tensor([[512],[384]])
+        # _, target_center, _ = self.reprojection.warp(source_center,
+        #                                 torch.from_numpy(source_position_map),
+        #                                 torch.from_numpy(target_R_CW), torch.from_numpy(target_t_CW),
+        #                                 mask_fov=True,
+        #                                 mask_occlusion=None,
+        #                                 mask_reflectance=None)
+        # target_center = target_center.long()
+        # scenter2tcenter = target_center - source_center
+        # scenter2tcenter = [scenter2tcenter[0].item(), scenter2tcenter[1].item()]
         
         if self.loading_mode == 'jpg':
             image_source = self.data_util_loader.loadRgb(info_source[0], info_source[1], info_source[2], info_source[3])
@@ -110,16 +110,16 @@ class HypersimLoader(Dataset):
             image_source = self._read_image(info_source[0], info_source[1], info_source[2], info_source[3])
             image_target = self._read_image(info_target[0], info_target[1], info_target[2], info_target[3])
         # image_target = crop(image_target, 192, 256, 384, 512)
-        image_target = crop(image_target, 192+scenter2tcenter[1], 256+scenter2tcenter[0], 384, 512)
-        image_source = crop(image_source, 192, 256, 384, 512)
+        # image_target = crop(image_target, 192+scenter2tcenter[1], 256+scenter2tcenter[0], 384, 512)
+        # image_source = crop(image_source, 192, 256, 384, 512)
         if image_target.mode == 'L':
             image_target_new = Image.new("RGB", image_target.size)
             image_target_new.paste(image_target)
             image_source_new = Image.new("RGB", image_source.size)
             image_source_new.paste(image_target)
-            sample = {'image_target': image_target_new, 'image_source': image_source_new, 'idx': idx, 'metainfo': [source_position_map, target_position_map, source_reflectance_map, target_R_CW, target_t_CW], 'source_frame': info_source, 'target_frame': info_target, 'scenter2tcenter': scenter2tcenter}
+            sample = {'image_target': image_target_new, 'image_source': image_source_new, 'idx': idx, 'metainfo': [source_position_map, target_position_map, source_reflectance_map, target_R_CW, target_t_CW], 'source_frame': info_source, 'target_frame': info_target}
         else:
-            sample = {'image_target': image_target, 'image_source': image_source, 'idx': idx, 'metainfo': [source_position_map, target_position_map, source_reflectance_map, target_R_CW, target_t_CW], 'source_frame': info_source, 'target_frame': info_target, 'scenter2tcenter': scenter2tcenter}
+            sample = {'image_target': image_target, 'image_source': image_source, 'idx': idx, 'metainfo': [source_position_map, target_position_map, source_reflectance_map, target_R_CW, target_t_CW], 'source_frame': info_source, 'target_frame': info_target}
         # sample = {'image_target': image_target, 'image_source': image_source, 'idx': idx, 'metainfo': [source_position_map, target_position_map, source_reflectance_map, target_R_CW, target_t_CW]}
 
         if self.data_transform:

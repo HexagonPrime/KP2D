@@ -163,12 +163,12 @@ def warp_frame2frame_batch(sources, metainfo, source_frame, target_frame, scente
         source_position_map, target_position_map, source_reflectance_map, target_R_CW, target_t_CW = \
                 metainfo[0][b], metainfo[1][b], metainfo[2][b], metainfo[3][b], metainfo[4][b]
         # print(scenter2tcenter)
-        this_scenter2tcenter = [scenter2tcenter[0][b], scenter2tcenter[1][b]]
+        # this_scenter2tcenter = [scenter2tcenter[0][b], scenter2tcenter[1][b]]
         # Flatten
         source = source.view(C, H*W)
         # the images were center cropped, therefore convert the keypoint locations to (1024, 768)
-        source[0] = source[0]+256
-        source[1] = source[1]+192
+        # source[0] = source[0]+256
+        # source[1] = source[1]+192
         # _, px_target, inliers = projection.warp(source,
         #                                         source_position_map,
         #                                         target_R_CW, target_t_CW,
@@ -182,10 +182,10 @@ def warp_frame2frame_batch(sources, metainfo, source_frame, target_frame, scente
                                                 mask_occlusion=None,
                                                 mask_reflectance=None)
         # change back to (512,384)
-        px_target[0] = px_target[0]-256
-        px_target[1] = px_target[1]-192
-        px_target[0] = px_target[0] - this_scenter2tcenter[0]
-        px_target[1] = px_target[1] - this_scenter2tcenter[1]
+        # px_target[0] = px_target[0]-256
+        # px_target[1] = px_target[1]-192
+        # px_target[0] = px_target[0] - this_scenter2tcenter[0]
+        # px_target[1] = px_target[1] - this_scenter2tcenter[1]
         # wrapped again
         px_target = px_target.view(C, H, W)
         inliers = inliers.view(1, H, W)
