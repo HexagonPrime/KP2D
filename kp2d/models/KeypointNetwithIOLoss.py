@@ -14,9 +14,10 @@ from kp2d.utils.image import (image_grid, to_color_normalized,
 from kp2d.utils.keypoints import draw_keypoints
 
 from kp2d.utils.reprojection import Reprojection
+from tqdm import tqdm
 
 
-def build_descriptor_loss(source_des, target_des, source_points, tar_points, tar_points_un, keypoint_mask=None, relax_field=8, eval_only=False):
+def build_descriptor_loss(source_des, target_des, source_points, tar_points, tar_points_un, keypoint_mask=None, relax_field=16, eval_only=False):
     """Desc Head Loss, per-pixel level triplet loss from https://arxiv.org/pdf/1902.11046.pdf..
     Parameters
     ----------
@@ -370,8 +371,8 @@ class KeypointNetwithIOLoss(torch.nn.Module):
                 # source_uv_pred dim: (B, 2, H_out, W_out)
                 # see warp_frame2frame_batch function above containing my converting
                 source_uv_warped, inliers = warp_frame2frame_batch(source_uv_pred, metainfo, source_frame, target_frame, scenter2tcenter, projection=reprojection)
-                print('inliers')
-                print(inliers)
+                # print('inliers')
+                # print(inliers.shape)
                 source_uv_warped = source_uv_warped.float()
                 # source_uv_warped = source_uv_warped.permute(0, 3, 1, 2)
                 # normalization
@@ -398,17 +399,21 @@ class KeypointNetwithIOLoss(torch.nn.Module):
             # Out-of-bourder(OOB) mask. Not nessesary in our case, since it's prevented at HA procedure already. Kept here for future usage.
             oob_mask2 = source_uv_warped_norm[:,:,:,0].lt(1) & source_uv_warped_norm[:,:,:,0].gt(-1) & source_uv_warped_norm[:,:,:,1].lt(1) & source_uv_warped_norm[:,:,:,1].gt(-1)
             border_mask = border_mask_ori & oob_mask2
-            print('border_mask')
-            print(border_mask)
+            # print('border_mask')
+            # print(border_mask.shape)
+            inliers = inliers.squeeze()
+            # print('inliers after squeezing')
+            # print(inliers.shape)
             border_mask = border_mask & inliers
+            # print(border_mask.shape)
 
             d_uv_mat_abs = torch.abs(source_uv_warped.view(B,2,-1).unsqueeze(3) - target_uv_pred.view(B,2,-1).unsqueeze(2))
             d_uv_l2_mat = torch.norm(d_uv_mat_abs, p=2, dim=1)
             d_uv_l2_min, d_uv_l2_min_index = d_uv_l2_mat.min(dim=2)
 
             dist_norm_valid_mask = d_uv_l2_min.lt(8) & border_mask.view(B,Hc*Wc)
-            print('dist_norm_valid_mask')
-            print(dist_norm_valid_mask)
+            # print('dist_norm_valid_mask')
+            # print(dist_norm_valid_mask.shape)
 
             # Keypoint loss
             loc_loss = d_uv_l2_min[dist_norm_valid_mask].mean()
