@@ -132,7 +132,7 @@ def warp_homography_batch(sources, homographies):
         warped_sources.append(source)
     return torch.stack(warped_sources, dim=0)
 
-def warp_frame2frame_batch(sources, metainfo, source_frame, target_frame, scenter2tcenter, projection):
+def warp_frame2frame_batch(sources, metainfo, source_frame, target_frame, projection):
     """Batch warp keypoints given homographies.
 
     Parameters
@@ -331,7 +331,7 @@ class KeypointNetwithIOLoss(torch.nn.Module):
             metainfo = data['metainfo']
             source_frame = data['source_frame']
             target_frame = data['target_frame']
-            scenter2tcenter = data['scenter2tcenter']
+            # scenter2tcenter = data['scenter2tcenter']
 
             input_img = to_color_normalized(input_img.clone())
             input_img_aug = to_color_normalized(input_img_aug.clone())
@@ -370,7 +370,7 @@ class KeypointNetwithIOLoss(torch.nn.Module):
                 # get source_uv with frame transformation, then normalize
                 # source_uv_pred dim: (B, 2, H_out, W_out)
                 # see warp_frame2frame_batch function above containing my converting
-                source_uv_warped, inliers = warp_frame2frame_batch(source_uv_pred, metainfo, source_frame, target_frame, scenter2tcenter, projection=reprojection)
+                source_uv_warped, inliers = warp_frame2frame_batch(source_uv_pred, metainfo, source_frame, target_frame, projection=reprojection)
                 # print('inliers')
                 # print(inliers.shape)
                 source_uv_warped = source_uv_warped.float()
