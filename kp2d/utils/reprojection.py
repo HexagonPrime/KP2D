@@ -27,7 +27,6 @@ class Reprojection:
 
     # Get the projection matrix that projects a homogeneous point in world coordinates onto screen coordinates.
     def getProjectionMatrix(self, R_CW, C_t_CW):
-        # C_t_CP = C_t_CW + R_CW.dot(W_t_WP)
         C_T_CW = np.block([[R_CW, np.asmatrix(C_t_CW).T], [np.zeros((1,3)), np.ones((1,1))]])
         return self.K.dot(C_T_CW)
 
@@ -47,9 +46,6 @@ class Reprojection:
     # px_src_inliers = px_src[:,inliers]
     # px_trg_inliers = px_trg[:,inliers]
     def warp(self, px_source, source_position_map, R_CW, C_t_CW_0, mask_fov=False, mask_occlusion=None, occlusion_threshold=0.03, mask_reflectance=None, reflectance_threshold=30):
-        # px_source = px_source.view(2, px_source.size(1)*px_source.size(2))
-        # Convert input to torch.
-        # source_position_map = torch.from_numpy(source_position_map)
         if self.device=='gpu':
             source_position_map=source_position_map.cuda()
         K = torch.from_numpy(self.K).float()
@@ -58,12 +54,9 @@ class Reprojection:
         N = px_source.size(1)
 
         # Construct projection matrix.
-        # print(C_t_CW)
         C_T_CW = torch.eye(4)
         if self.device == 'gpu':
             C_T_CW = C_T_CW.cuda()
-        # C_T_CW[0:3, 0:3] = torch.from_numpy(R_CW)
-        # C_T_CW[0:3, 3] = torch.from_numpy(C_t_CW)
         C_T_CW[0:3, 0:3] = R_CW
         C_T_CW[0:3, 3] = C_t_CW_0
         if self.device=='gpu':
@@ -72,17 +65,18 @@ class Reprojection:
 
         # Get homogeneous world position of pixels.
         if self.device == 'gpu':
-            W_t_WP = source_position_map[torch.round(px_source[1,:]).long(), torch.round(px_source[0,:]).long()].T
+                W_t_WP_0 = source_position_map[torch.round(px_source[1,:]).long(), torch.round(px_source[0,:]).long()].T
         else:
-            W_t_WP = source_position_map[px_source[1,:], px_source[0,:]].T
-        # print(px_source.shape)
-        # print(W_t_WP)
-        # print(W_t_WP.shape)
-        # print(N)
+            W_t_WP_0 = source_position_map[px_source[1,:], px_source[0,:]].T
+
         if self.device=='gpu':
-            W_t_WP = torch.cat((W_t_WP, torch.ones(1, N).cuda()), 0)
+            try:
+                W_t_WP = torch.cat((W_t_WP_0, torch.ones(1, N).cuda()), 0)
+            except RuntimeError:
+                torch.save(px_source, 'px_source.pt')
+                torch.save(W_t_WP_0, 'W_t_WP_0.pt')
         else:
-            W_t_WP = torch.cat((W_t_WP, torch.ones(1, N)), 0)
+            W_t_WP = torch.cat((W_t_WP_0, torch.ones(1, N)), 0)
 
         # Project pixels into screen coordinates.
         p_screen = torch.matmul(P, W_t_WP)

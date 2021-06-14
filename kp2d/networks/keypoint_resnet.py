@@ -157,7 +157,7 @@ class KeypointResnet(nn.Module):
         self.decoderK = KeypointDecoder()
 
         self.cross_ratio = 2.0
-        self.cell = 16
+        self.cell = 8
         
     def forward(self, x):
 

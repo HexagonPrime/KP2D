@@ -1,1 +1,0 @@
-bsub -o kp2d.out -e kp2d.err -W 24:00 -R "rusage[mem=30000,ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" -R "select[gpu_mtotal0>=5240]" "python train_keypoint_net.py --file kp2d/configs/v4.yaml --mode coco --pretrained_model /cluster/scratch/shecai/KP2D_pretrained_models/v4.ckpt"

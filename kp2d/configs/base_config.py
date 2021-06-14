@@ -20,17 +20,18 @@ cfg.arch.epochs = 50                # Maximum number of epochs
 ### WANDB
 ########################################################################################################################
 cfg.wandb = CN()
-cfg.wandb.dry_run = True                                # Wandb dry-run (not logging)
-cfg.wandb.name = 'con'                                      # Wandb run name
-cfg.wandb.project = 'KP2D'  # Wandb project
-cfg.wandb.entity = 'hexagonprime'    # Wandb entity
+cfg.wandb.dry_run = False                                # Wandb dry-run (not logging)
+cfg.wandb.name = ''                                      # Wandb run name
+cfg.wandb.project = ''  # Wandb project
+cfg.wandb.entity = ''    # Wandb entity
 cfg.wandb.tags = []                                      # Wandb tags
 cfg.wandb.dir = 'wandb'                                       # Wandb save folder
 ########################################################################################################################
 ### MODEL
 ########################################################################################################################
 cfg.model = CN()
-cfg.model.checkpoint_path = '/scratch_net/biwidl306_second/shecai/KP2D_model/'              # Checkpoint path for model saving
+# cfg.model.checkpoint_path = '/scratch_net/biwidl306_second/shecai/KP2D_model/'              # Checkpoint path for model saving
+cfg.model.checkpoint_path = 'PATH/TO/SAVING/DIRECTORY'
 cfg.model.save_checkpoint = True
 ########################################################################################################################
 ### MODEL.SCHEDULER
@@ -66,17 +67,17 @@ cfg.datasets = CN()
 ########################################################################################################################
 cfg.datasets.augmentation = CN()
 # cfg.datasets.augmentation.image_shape = (240, 320)              # Image shape
-cfg.datasets.augmentation.image_shape = (768, 1024)              # Image shape
-# cfg.datasets.augmentation.image_shape = (384, 512)
+# cfg.datasets.augmentation.image_shape = (768, 1024)              # Image shape
+cfg.datasets.augmentation.image_shape = (384, 512)
 cfg.datasets.augmentation.jittering = (0.5, 0.5, 0.2, 0.05)     # Color jittering values
 ########################################################################################################################
 ### DATASETS.TRAIN
 ########################################################################################################################
 cfg.datasets.train = CN()
-cfg.datasets.train.batch_size = 2                                      # Training batch size
+cfg.datasets.train.batch_size = 8                                      # Training batch size
 cfg.datasets.train.num_workers = 16                                    # Training number of workers
 # cfg.datasets.train.path = '/cluster/scratch/shecai/train2017'          # Training data path (COCO dataset)
-cfg.datasets.train.path = '/scratch_net/biwidl306_second/shecai/hypersim/'          # Training data path (Hypersim dataset)
+cfg.datasets.train.path = 'HYPERSIM/PATH'          # Training data path (Hypersim dataset)
 cfg.datasets.train.repeat = 1                                          # Number of times training dataset is repeated per epoch
 # cfg.datasets.train.dataset = 'COCO'                                    # Training dataset name, can be 'COCO' or 'Hypersim'
 # cfg.datasets.train.dataset = 'Hypersim'                                    # Training dataset name, can be 'COCO' or 'Hypersim'
@@ -84,7 +85,7 @@ cfg.datasets.train.repeat = 1                                          # Number 
 ### DATASETS.VAL
 ########################################################################################################################
 cfg.datasets.val = CN()
-cfg.datasets.val.path = '/scratch_net/biwidl306_second/shecai/HPatches'     # Validation data path (HPatches)
+cfg.datasets.val.path = 'HPATCHES/PATH'     # Validation data path (HPatches)
 ########################################################################################################################
 ### THESE SHOULD NOT BE CHANGED
 ########################################################################################################################

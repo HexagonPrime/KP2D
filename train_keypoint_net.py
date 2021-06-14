@@ -21,13 +21,22 @@ from kp2d.utils.logging import SummaryWriter, printcolor
 from train_keypoint_net_utils import (_set_seeds, sample_to_cuda,
                                       setup_datasets_and_dataloaders)
 
+from kp2d.evaluation_hypersim.evaluate import evaluate_keypoint_net_hypersim
+from kp2d.datasets.hypersim import HypersimLoader
+from kp2d.datasets.augmentations import to_tensor_sample
+
 
 def parse_args():
     """Parse arguments for training script"""
     parser = argparse.ArgumentParser(description='KP2D training script')
     parser.add_argument('--file', type=str, help='Input file (.ckpt or .yaml)')
-    parser.add_argument('--training_mode', type=str, help='coco, cam_trajectory or scene')
+    parser.add_argument('--training_mode', type=str, help='HA, cam, scene, con, cam+HA, scene+HA, con+HA')
     parser.add_argument('--pretrained_model', type=str, default=None)
+    parser.add_argument('--partition', type=str, default=None)
+    parser.add_argument('--wandb_name', type=str, default=None)
+    parser.add_argument('--interval', type=int, default=None)
+    parser.add_argument("--non_spatial_aug", default=False, action="store_true",
+                    help="whether to do non spatial pre-processing")
     args = parser.parse_args()
     assert args.file.endswith(('.ckpt', '.yaml')), \
         'You need to provide a .ckpt of .yaml file'
@@ -49,7 +58,7 @@ def model_submodule(model):
     the model itself. """
     return model.module if hasattr(model, 'module') else model
 
-def main(file, training_mode, pretrained_model=None):
+def main(file, training_mode, non_spatial_aug, wandb_name, interval, partition, pretrained_model=None):
     """
     KP2D training script.
 
@@ -64,6 +73,7 @@ def main(file, training_mode, pretrained_model=None):
     config = parse_train_file(file)
     print(config)
     print(config.arch)
+    config.wandb.name = wandb_name
 
     # Initialize horovod
     hvd_init()
@@ -87,8 +97,8 @@ def main(file, training_mode, pretrained_model=None):
         printcolor(config.model.params, 'red')
 
     # Setup model and datasets/dataloaders
-    model = KeypointNetwithIOLoss(pretrained_model=pretrained_model, training_mode=training_mode, **config.model.params)
-    train_dataset, train_loader = setup_datasets_and_dataloaders(config.datasets, training_mode)
+    model = KeypointNetwithIOLoss(pretrained_model=pretrained_model, training_mode=training_mode, keypoint_net_learning_rate=config.model.optimizer.learning_rate, **config.model.params)
+    train_dataset, train_loader = setup_datasets_and_dataloaders(config.datasets, training_mode=training_mode, non_spatial_aug=non_spatial_aug, interval=interval, partition=partition)
     printcolor('({}) length: {}'.format("Train", len(train_dataset)))
 
     model = model.cuda()
@@ -160,26 +170,53 @@ def evaluation(config, completed_epoch, model, summary):
                                     sampler=None)
             print('Loaded {} image pairs '.format(len(data_loader)))
 
-            printcolor('Evaluating for {} -- top_k {}'.format(params['res'], params['top_k']))
+            printcolor('HPatches: Evaluating for {} -- top_k {}'.format(params['res'], params['top_k']))
             rep, loc, c1, c3, c5, mscore = evaluate_keypoint_net(data_loader,
                                                                 model_submodule(model).keypoint_net,
                                                                 output_shape=params['res'],
                                                                 top_k=params['top_k'],
                                                                 use_color=use_color)
             if summary:
-                summary.add_scalar('repeatability_'+str(params['res']), rep)
-                summary.add_scalar('localization_' + str(params['res']), loc)
-                summary.add_scalar('correctness_'+str(params['res'])+'_'+str(1), c1)
-                summary.add_scalar('correctness_'+str(params['res'])+'_'+str(3), c3)
-                summary.add_scalar('correctness_'+str(params['res'])+'_'+str(5), c5)
-                summary.add_scalar('mscore' + str(params['res']), mscore)
+                summary.add_scalar('hpatches_repeatability_'+str(params['res']), rep)
+                summary.add_scalar('hpatches_localization_' + str(params['res']), loc)
+                summary.add_scalar('hpatches_correctness_'+str(params['res'])+'_'+str(1), c1)
+                summary.add_scalar('hpatches_correctness_'+str(params['res'])+'_'+str(3), c3)
+                summary.add_scalar('hpatches_correctness_'+str(params['res'])+'_'+str(5), c5)
+                summary.add_scalar('hpatches_mscore' + str(params['res']), mscore)
 
-            print('Repeatability {0:.3f}'.format(rep))
-            print('Localization Error {0:.3f}'.format(loc))
-            print('Correctness d1 {:.3f}'.format(c1))
-            print('Correctness d3 {:.3f}'.format(c3))
-            print('Correctness d5 {:.3f}'.format(c5))
-            print('MScore {:.3f}'.format(mscore))
+            print('Hpatches Repeatability {0:.3f}'.format(rep))
+            print('Hpatches Localization Error {0:.3f}'.format(loc))
+            print('Hpatches Correctness d1 {:.3f}'.format(c1))
+            print('Hpatches Correctness d3 {:.3f}'.format(c3))
+            print('Hpatches Correctness d5 {:.3f}'.format(c5))
+            print('Hpatches MScore {:.3f}'.format(mscore))
+
+        params = {'res': (1024, 768), 'top_k': 1000}
+        # hp_dataset = HypersimLoader(config.datasets.train.path, training_mode='consecutive', data_transform=to_tensor_sample, partition='val+test')
+        hp_dataset = HypersimLoader(config.datasets.train.path, training_mode='con', center_crop=False, data_transform=to_tensor_sample, interval=1, partition='val+test')
+        data_loader = DataLoader(hp_dataset,
+                                batch_size=1,
+                                pin_memory=False,
+                                shuffle=False,
+                                num_workers=8,
+                                worker_init_fn=None,
+                                sampler=None)
+        print('Loaded {} image pairs '.format(len(data_loader)))
+
+        printcolor('Hypersim: Evaluating for {} -- top_k {}'.format(params['res'], params['top_k']))
+        rep, loc, mscore = evaluate_keypoint_net_hypersim(data_loader,
+                                                        model_submodule(model).keypoint_net,
+                                                        output_shape=params['res'],
+                                                        top_k=params['top_k'],
+                                                        use_color=use_color)
+        if summary:
+            summary.add_scalar('hypersim_repeatability_'+str(params['res']), rep)
+            summary.add_scalar('hypersim_localization_' + str(params['res']), loc)
+            summary.add_scalar('hypersim_mscore' + str(params['res']), mscore)
+
+        print('Hypersim Repeatability {0:.3f}'.format(rep))
+        print('Hypersim Localization Error {0:.3f}'.format(loc))
+        print('Hypersim MScore {:.3f}'.format(mscore))
 
     # Save checkpoint
     if config.model.save_checkpoint and rank() == 0:
@@ -254,9 +291,18 @@ def train(config, train_loader, model, optimizer, epoch, summary):
 
                     model(data_cuda, debug=True)
                     for k, v in model_submodule(model).vis.items():
-                        summary.add_image(k, v)
+                        if k=='img_src' or k=='img_src_masked':
+                            caption = model_submodule(model).vis['source_name'] + '_' + str(i)
+                            summary.add_image(k, v, input_caption=caption)
+                        elif k=='img_tar' or k=='img_tar_masked':
+                            caption = model_submodule(model).vis['target_name'] + '_' + str(i)
+                            summary.add_image(k, v, input_caption=caption)
+                        elif k=='source_name' or k=='target_name':
+                            continue
+                        else:
+                            summary.add_image(k, v)
 
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args.file, args.training_mode, args.pretrained_model)
+    main(args.file, training_mode=args.training_mode, non_spatial_aug=args.non_spatial_aug, wandb_name=args.wandb_name, pretrained_model=args.pretrained_model, interval=args.interval, partition=args.partition)

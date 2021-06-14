@@ -60,12 +60,15 @@ class SummaryWriter:
         if self.log_wb:
             self.wb_logger.log_values(tag, scalar_value, now=False)
 
-    def add_image(self, tag, img_tensor):
+    def add_image(self, tag, img_tensor, input_caption=None):
         assert img_tensor.max() <= 1.0
         assert (isinstance(img_tensor, torch.Tensor) and img_tensor.device == torch.device(
             'cpu')) or isinstance(img_tensor, np.ndarray)
         if self.log_wb:
-            caption = tag
+            if input_caption==None:
+                caption = tag
+            else:
+                caption = input_caption
             if isinstance(img_tensor, torch.Tensor):
                 # shape: (C, H, W)
                 size = tuple(img_tensor.shape[-2:][::-1])

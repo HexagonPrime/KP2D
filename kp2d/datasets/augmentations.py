@@ -89,7 +89,7 @@ def spatial_augment_sample(sample):
         
     # ])
     # sample['image'] = augment_image(sample['image'])
-    # new code
+    # new code, since image_target and image_source are separate, need to ensure the transformations being the same
     if random.random() > 0.5:
         sample['image_target'] = transforms.functional.vflip(sample['image_target'])
         sample['image_source'] = transforms.functional.vflip(sample['image_source'])
@@ -334,12 +334,56 @@ def non_spatial_augmentation(img_warp_ori, jitter_paramters, color_order=[0,1,2]
     img_warp = torch.stack(img_warp, dim=0)
     return img_warp
 
-def ha_augment_sample(data, training_mode, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=0.7, scaling_amplitude=0.2, max_angle=pi/4):
-    """Apply Homography Adaptation image augmentation."""
+# Original:
+# def ha_augment_sample(data, training_mode, non_spatial_aug, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=0.7, scaling_amplitude=0.2, max_angle=pi/4):
+#     """Apply Homography Adaptation image augmentation."""
+#     target_img = data['image_target'].unsqueeze(0)
+#     source_img = data['image_source'].unsqueeze(0)
+#     if training_mode=='HA' or training_mode=='scene+HA' or training_mode=='cam+HA'\
+#          or training_mode=='consecutive+HA' or training_mode=='HA_wo_sp':
+#         # print("Training with coco style, apply homography transformation")
+#         _, _, H, W = target_img.shape
+#         device = target_img.device
+
+#         # Generate homography (warps source to target)
+#         homography = sample_homography([H, W],
+#             patch_ratio=patch_ratio, 
+#             scaling_amplitude=scaling_amplitude, 
+#             max_angle=max_angle)
+#         homography = torch.from_numpy(homography).float().to(device)
+
+#         source_grid = image_grid(1, H, W,
+#                         dtype=target_img.dtype,
+#                         device=device,
+#                         ones=False, normalized=True).clone().permute(0, 2, 3, 1)
+
+#         source_warped = warp_homography(source_grid, homography)
+#         source_img = torch.nn.functional.grid_sample(source_img, source_warped, align_corners=True)
+#         data['homography'] = homography
+#         # else:
+#         # print("Not coco style, training WITHOUT homography transformation")
+#     if non_spatial_aug:
+#         color_order = [0,1,2]
+#         if np.random.rand() > 0.5:
+#             random.shuffle(color_order)
+
+#         to_gray = False
+#         if np.random.rand() > 0.5:
+#             to_gray = True
+#         target_img = non_spatial_augmentation(target_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
+#         source_img = non_spatial_augmentation(source_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
+
+#     data['image'] = target_img.squeeze()
+#     data['image_aug'] = source_img.squeeze()
+#     return data
+
+def ha_augment_sample(data, training_mode, non_spatial_aug, jitter_paramters=[0.5, 0.5, 0.2, 0.05], patch_ratio=0.7, scaling_amplitude=0.2, max_angle=pi/4):
+    """Apply Homography Adaptation or real world viewpoint adaptation image augmentation."""
     target_img = data['image_target'].unsqueeze(0)
     source_img = data['image_source'].unsqueeze(0)
-    if training_mode=='coco':
-        # print("Training with coco style, apply homography transformation")
+    # only apply H.A for corresponding modes
+    if training_mode=='HA' or training_mode=='scene+HA' or training_mode=='cam+HA'\
+         or training_mode=='con+HA' or training_mode=='HA_wo_sp':
         _, _, H, W = target_img.shape
         device = target_img.device
 
@@ -350,27 +394,24 @@ def ha_augment_sample(data, training_mode, jitter_paramters=[0.5, 0.5, 0.2, 0.05
             max_angle=max_angle)
         homography = torch.from_numpy(homography).float().to(device)
 
-        source_grid = image_grid(1, H, W,
+        target_grid = image_grid(1, H, W,
                         dtype=target_img.dtype,
                         device=device,
                         ones=False, normalized=True).clone().permute(0, 2, 3, 1)
 
-        source_warped = warp_homography(source_grid, homography)
-        source_img = torch.nn.functional.grid_sample(source_img, source_warped, align_corners=True)
-        data['homography'] = homography
-    # else:
-        # print("Not coco style, training WITHOUT homography transformation")
+        target_warped = warp_homography(target_grid, homography)
+        target_img = torch.nn.functional.grid_sample(target_img, target_warped, align_corners=True)
+        data['homography'] = torch.inverse(homography)
+    if non_spatial_aug:
+        color_order = [0,1,2]
+        if np.random.rand() > 0.5:
+            random.shuffle(color_order)
 
-    color_order = [0,1,2]
-    if np.random.rand() > 0.5:
-        random.shuffle(color_order)
-
-    to_gray = False
-    if np.random.rand() > 0.5:
-        to_gray = True
-
-    target_img = non_spatial_augmentation(target_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
-    source_img = non_spatial_augmentation(source_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
+        to_gray = False
+        if np.random.rand() > 0.5:
+            to_gray = True
+        target_img = non_spatial_augmentation(target_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
+        source_img = non_spatial_augmentation(source_img, jitter_paramters=jitter_paramters, color_order=color_order, to_gray=to_gray)
 
     data['image'] = target_img.squeeze()
     data['image_aug'] = source_img.squeeze()

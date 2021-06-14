@@ -33,10 +33,11 @@ def main():
     model_args = checkpoint['config']['model']['params']
 
     # Check model type
-    if 'keypoint_net_type' in checkpoint['config']['model']['params']:
-        net_type = checkpoint['config']['model']['params']
-    else:
-        net_type = KeypointNet # default when no type is specified
+    # if 'keypoint_net_type' in checkpoint['config']['model']['params']:
+    #     net_type = checkpoint['config']['model']['params']
+    # else:
+    #     net_type = KeypointNet # default when no type is specified
+    net_type = KeypointNet # default when no type is specified
 
     # Create and load keypoint net
     if net_type is KeypointNet:
